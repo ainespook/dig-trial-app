@@ -1,6 +1,6 @@
 #this can be edited as much as we need, i just added a few preliminary points
-S
-hiny app for DIG trial data exploration
+
+Shiny app for DIG trial data exploration
 
 This repository contains a Shiny app designed for exploring and visualizing data from the Digitalis Investigation Group (DIG) Trial.
 
