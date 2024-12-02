@@ -2,19 +2,19 @@
 
 if (!require("shiny")) install.packages("shiny")
 if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("palmerpenguins")) install.packages("palmerpenguins")
 if (!require("DynNom")) install.packages("DynNom")
 if (!require("shinydashboard")) install.packages("shinydashboard")
 library(tidyverse)
 library(shiny)
-library(palmerpenguins)
+
 
 
 ui <- fluidPage(
   titlePanel("DIG Trial Data Exploration"),
   sidebarLayout(
     sidebarPanel(
-      selectInput(inputId = "TRTMT", label = "Treatment Group:", choices = c("Placebo", "Treatment"), multiple = FALSE)
+      selectInput(inputId = "TRTMT", label = "Treatment Group:", choices = c("Placebo", "Treatment"), multiple = FALSE),
+      radioButtons(inputId = "SEX", label = "Select Sex:", choices = c("Male", "Female"), inline = T)
     ),
     mainPanel(
       #outputs here
