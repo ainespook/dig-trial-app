@@ -1,0 +1,107 @@
+---
+title: "check"
+output: html_document
+date: "2024-12-02"
+---
+
+#Project Description
+The app allows users to interact with and analyze the trial data (`DIG.csv`). Key features include:
+
+- Interactive data visualization
+- Statistical summaries
+- etc...
+
+#Project Structure
+- `data/`: contains our dataset (`DIG.csv`)
+- `app.R`: the main shiny application code file
+- `other/`: codebook and any other misc files
+- 'README.md': description of the repository
+
+#Data
+The app uses the `DIG.csv` file, which contains the trial data. A codebook for understanding the variables can be found in the `DIG_code_book.pdf`.
+
+#Requirements
+To run this app, you will need the following R packages:
+
+- shiny
+- ggplot2
+- dplyr
+- etc...
+
+These can be installed using:
+install.packages(c("shiny", "ggplot2", "dplyr", etc...))
+
+Prepare DIG file
+
+```{r}
+DIG.df <- read.csv("/Users/mtooq8/Desktop/DIG.csv")
+DIG_sub.df <- DIG.df %>%
+  select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, SYSBP, 
+         HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY)
+DIG_sub.df <- DIG_sub.df %>%
+  mutate(
+    ID = as.factor(ID),
+    TRTMT = as.factor(TRTMT),
+    AGE = as.numeric(AGE),
+    SEX = as.factor(SEX),
+    BMI = as.numeric(BMI),
+    KLEVEL = as.numeric(KLEVEL),
+    CREAT = as.numeric(CREAT),
+    DIABP = as.numeric(DIABP),
+    SYSBP = as.numeric(SYSBP),
+    HYPERTEN = as.factor(HYPERTEN),
+    CVD = as.factor(CVD),
+    WHF = as.factor(WHF),
+    DIG = as.factor(DIG),
+    HOSP = as.factor(HOSP),
+    HOSPDAYS = as.numeric(HOSPDAYS),
+    DEATH = as.factor(DEATH),
+    DEATHDAY = as.numeric(DEATHDAY)
+  )
+DIG_sub.df <- DIG_sub.df %>%
+  mutate(
+    TRTMT = fct_recode(TRTMT, Placebo = "0", Treatment = "1"),
+    SEX = fct_recode(SEX, Male = "1", Female = "2"),
+    HYPERTEN = fct_recode(HYPERTEN, No = "0", Yes = "1"),
+    CVD = fct_recode(CVD, No = "0", Yes = "1"),
+    WHF = fct_recode(WHF, No = "0", Yes = "1"),
+    DIG = fct_recode(DIG, No = "0", Yes = "1"),
+    HOSP = fct_recode(HOSP, No = "0", Yes = "1"),
+    DEATH = fct_recode(DEATH, Alive = "0", Death = "1")
+  )
+```
+
+Shiny
+
+```{r}
+if (!require("shiny")) install.packages("shiny")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("palmerpenguins")) install.packages("palmerpenguins")
+if (!require("DynNom")) install.packages("DynNom")
+if (!require("shinydashboard")) install.packages("shinydashboard")
+library(tidyverse)
+library(shiny)
+library(palmerpenguins)
+
+
+
+ui <- fluidPage(
+  titlePanel("DIG Trial Data Exploration"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput(inputId = "TRTMT", label = "Treatment Group:", choices = c("Placebo", "Treatment"), multiple = FALSE),
+      radioButtons(inputId = "SEX", label = "Select Sex:", choices = c("Male", "Female"), inline = T)
+    ),
+    mainPanel(
+      #outputs here
+    )
+  )
+)
+
+server <- function(input, output) {
+  #server workings here
+}
+
+shinyApp(ui = ui, server = server)
+
+```
