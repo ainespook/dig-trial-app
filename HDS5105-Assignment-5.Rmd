@@ -1,5 +1,5 @@
 ---
-title: "check"
+title: "HDS5105 Assignment 5"
 output: html_document
 date: "2024-12-02"
 ---
@@ -76,12 +76,10 @@ Shiny
 ```{r}
 if (!require("shiny")) install.packages("shiny")
 if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("palmerpenguins")) install.packages("palmerpenguins")
 if (!require("DynNom")) install.packages("DynNom")
 if (!require("shinydashboard")) install.packages("shinydashboard")
 library(tidyverse)
 library(shiny)
-library(palmerpenguins)
 
 
 
