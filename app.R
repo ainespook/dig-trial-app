@@ -14,7 +14,8 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       selectInput(inputId = "TRTMT", label = "Treatment Group:", choices = c("Placebo", "Treatment"), multiple = FALSE),
-      radioButtons(inputId = "SEX", label = "Select Sex:", choices = c("Male", "Female"), inline = T)
+      radioButtons(inputId = "SEX", label = "Select Sex:", choices = c("Male", "Female"), inline = T),
+      sliderInput("AGE", "Select Age Range:", min = 0, max = 100, value = c(30, 50))
     ),
     mainPanel(
       #outputs here
