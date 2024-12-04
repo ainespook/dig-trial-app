@@ -1,0 +1,815 @@
+---
+title: "Lecture 10 - Shiny"
+output:
+  html_document:
+    df_print: paged
+    runtime: shiny
+---
+
+```{css, echo = FALSE}
+.shiny-frame{height: 1000px; width: 1000px;}
+```  
+
+## Load some of the required packages
+
+```{r, warning=FALSE, message=FALSE}
+if (!require("shiny")) install.packages("shiny")
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("palmerpenguins")) install.packages("palmerpenguins")
+if (!require("DynNom")) install.packages("DynNom")
+if (!require("shinydashboard")) install.packages("shinydashboard")
+
+
+library(tidyverse)
+library(shiny)
+library(palmerpenguins)
+
+```
+
+## Introduction
+
+So far, the role of data exploration as one of the key steps in any data science project was discussed. Those visualisations often take the form of static or dynamic graphs that allow the reader to interact with (e.g. filter and highlight) data. However, combining a set of dynamically linked interactive graphs on a dashboard not only takes this level of interaction further but also enables users to see the most useful information at a glance that improves their decision-making processes.
+
+This is particularly important when working with healthcare providers where the end-users are mostly non-technical people with little or no knowledge of the statistical analyses performed. For example, when reporting the statistical results of analysing prostate cancer data, doctors may be interested in the effect of risk factors on the outcomes, while patients may want to know what is the risk of the cancer recurrence or what is the corresponding side effect for each treatment option, based on their initial risk factors. On the other hand, policy makers might care about the cure rates and the cost associated with that tomake optimal decisions toward a better healthcare system. Therefore, the main goal of communication here is to present the result of the study with minimal technical detail which needs to be tailored to match the targeted audience interests. However, it should be noted that when translating statistical models to practitioners, lots of care and consideration should be taken to prevent misuse and misinterpretation of the results. Today's increasing demand for creating and storing data have enabled the development of advanced data visualisation and dashboard creations tools. (**Microsoft Power BI**)[<https://powerbi.microsoft.com/en-ie/>], [**Qlik**](https://www.qlik.com/us/), [**Tableau**](https://www.tableau.com/), and the [**shiny**](https://shiny.posit.co/) and [**shinydashboard**](https://rstudio.github.io/shinydashboard/) package in R are some of many available tools for this purpose where the first three are commercial software while the **shiny** and **shinydashboard** are free and open source software.
+
+The other case scenario is when you aim to communicate your findings with people who are scientists with similar research interests who are either going to use the result of your models in their own application or extend the models. The emergence of interactive tools like [**shiny**](https://shiny.posit.co/) and the (**DynNom**)[<https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225253>] packages in R takes this level of communication further. In fact, dynamic visualisation of a model enables users to interact with a model by changing the 'parameters' (e.g. number of predictors, sample size, confidence level, and etc.) and observing the effect of changes on the model. The ability to interact with models might provide opportunities for the new discoveries and research questions
+
+In this lecture we will discuss the use of **shiny** and **shinydashboard** in developing interactive dashboards.
+
+## The shiny package
+
+The [**shiny**](https://shiny.posit.co/) package in R is a powerful tool for creating interactive web-based applications with no knowledge of HTML, CSS, or JavaScript. It's build on a very strong software engineering principle which makes the use of that quite easy for people with not much web design expertise. Shiny bridges the gap between data analysis and data communication by allowing users to build interactive, user-friendly web applications with minimal effort. By leveraging the capabilities of Shiny, data professionals can share their insights and visualizations with non-technical stakeholders, enabling data-driven decision-making and enhancing collaboration within organizations. Shiny is used in various domains, such as data visualization, data exploration, reporting, and decision support systems. It is a great tool for anyone looking to make their data analyses more accessible, engaging, and interactive.
+
+## Basic architecture
+
+Every shiny application is composed of two fundamental components: a user-interface (known as `ui()` ) and `server()`; where the former is responsible for creating the layout and appearance of the shiny application, while the latter manages the logic behind the application through a set of R functions which control what should be displayed when the user interacts with the application.
+
+You can create a Shiny app in various ways, but the easiest method is to start by making a new folder for your app and placing a single file named `app.R` (i.e. an R script that is called `app.R`) in it. This `app.R` file serves as a guide for Shiny, and tell shiny how it should look and what should display.
+
+Alternatively you can define two R files which have to be in the same directory:
+
+-   The file `ui.R` that specifies the layout ("user interface") of the app.
+
+-   The file `server.R` that contains the "backend" performing the calculations and producing the plots and other outputs.
+
+For now we will use the first method. But as the app gets more complex, it is recommended to use the second approach.
+
+## The shortest viable shiny app
+
+**Task1:** save a blank R script called `app.R` in a folder of your choice on your machine.
+
+**Task2:** Copy and paste the code below and run them all. What do you notice?
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+Well done! This is your first complete Shiny app! Looking closely at the code you can see:
+
+-   It calls `library(shiny)` to load the shiny package.
+
+-   It defines the user interface, the HTML webpage that humans interact with. In this case, it's a blank page.
+
+-   It specifies the behaviour of our app by defining a server function. For now it's empty, so the app doesn't do anything.
+
+-   It executes `shinyApp(ui, server)` to construct and start a Shiny application from the UI and server.
+
+Before you close the app, if you look at the R console, you see that it says something like: `Listening on http://127.0.0.1:4797`
+
+This provides you with the URL where your app is accessible: `127.0.0.1` is a standard address indicating "this computer," and `4797` is a randomly assigned port number. You can copy and paste this URL into any compatible web browser to see another copy of your app.
+
+Also note that when a Shiny app is running, it "blocks" the R console which means you can not run any new commands at the R console until the Shiny app stops.
+
+To stop a shiny app you can:
+
+-   Click the stop sign icon on the R console toolbar.
+
+-   Click on the console and then press the "Esc" key.
+
+-   Simply close the Shiny app window.
+
+## Shiny for penguins data
+
+Below we aim to demonstrate an step by step guide to develop a shiny application for the penguin data from the **palmerpenguins** package. We want the app to allow us to filter penguin data based on species, sex, and body mass range and then visualizes relationship between penguins' bill depths and bill lengths for the filtered data in a scatter plot.
+
+### Building the UI
+
+#### Add a title
+
+The arguments passed to `fluidPage` represent the control sections in the Shiny app, arranged from top to bottom.
+
+The `titlePanel("Title goes here")` function add a title into your app.
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer")
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+#### Sidebar layout
+
+the `sidebarLayout` is a one of many layout function in Shiny that helps create structured and organised web applications. It typically consists of two panels: a `sidebarPanel` for user inputs and controls, and a `mainPanel` for displaying the app's content or visualizations. This layout structure is a common choice for Shiny apps, allowing you to separate user interactions from the primary content, resulting in a cleaner and more user-friendly interface.
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+    # Controls and content for sidebar go here
+    ),
+    mainPanel(
+    # Controls and content for main panel go here
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+#### Controls
+
+Shiny has a wide range of input controls that allow users to interact with data by adjusting various parameters through the user interface.
+
+For example, input controls such as sliders, checkboxes, and dropdown menus can be used in our shiny to allow user select specific penguin species or filter data based on attributes like sex or body mass. For a comprehensive list of widgets and their usage see [here](https://shiny.posit.co/r/getstarted/shiny-basics/lesson3/) and [here](https://mastering-shiny.org/basic-ui.html#inputs).
+
+`**selectInput()**`
+
+Below we would like to add a dropdown menu to allow users to filter the data based on the species of interest:
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        
+        selectInput(inputId = "sex", label = "Select Penguin sex:", choices = c("m", "f"), multiple = FALSE)
+        
+    ),
+    mainPanel(
+    # Controls and content for main panel go here
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+```
+
+The `selectInput()` in the shiny above is an input control that lets the user interact with the app by providing a value. In this case, it’s a select box with the label “Select Penguin Species:” and lets you choose one of the species in penguins dataset. If you want to allow users to select more than one species you can make argument `multiple = TRUE`. 
+
+**Task:** Set the argument `multiple` to `TRUE` in the code above and see the result. 
+
+The first argument in all input controls is `inputId`. This is the identifier used to connect the front end with the back end: if your UI has an input with ID `"name"`, the server function will access it with `input$name`. In our app above the `inputId` to define which species we are interested in is `"species"`. You should be very careful to **not use** the same `inputId` for multiple input controls.
+
+Following the `inputId` you can define the `label` which will be used to create a human-readable label for the control.
+
+**Task:** In the R chunk below use the `selectInput` control to add another input control that allows user to select the sex of penguins.
+
+```{r}
+### Insert your code here
+
+
+
+```
+
+`**radioButtons**`
+
+An alternative to `selectInput` is `radioButtons()`. Radio buttons are very useful displays all possible choices, making them suitable for short lists. 
+
+Below we used the `radioButtons()` to allow users to choose the sex of penguins:
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male"), inline = T)
+    ),
+    mainPanel(
+    # Controls and content for main panel go here
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+
+
+```
+
+`**sliderInput()**`
+
+`sliderInput()` is another control input that allows users to select a numeric range by moving a slider handle along a track. It is commonly used for specifying numeric input parameters, such as setting a range of values for filtering or adjusting a plot. `sliderInput()` is highly customizable, allowing you to define the minimum and maximum values, initial values, step size, and labels.
+
+Below we add a `sliderInput()` to our shiny which allows users to filter the data based on a range of values provided for Body Mass:
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000))
+
+    ),
+    mainPanel(
+    # Controls and content for main panel go here
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+
+```
+
+Below we have added another `sliderInput()` indicating the year of the study year (2007, 2008, or 2009). We have used two more arguments `step` and `animate` where the former specifies the interval between each selectable value on the slider while the latter show simple animation controls allowing the changes between years happen automatically. 
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    # Controls and content for main panel go here
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+
+```
+
+#### Adding behaviour
+
+So far we have only put together a user interface containing controls, but didn't show any plots or outputs. In order to have a component that shows output from R we need to set up this component in both `ui` and `server`. In fact, in the `ui` we specify **what** we want to generate (i.e.a plot, a table, a text, etc) and in the `server` we tell R **how** to generate it.
+
+Shiny uses reactive programming to make apps interactive. The main idea behind reactive programming involves specifying a group of dependencies, ensuring that when there's a change in an input, all associated outputs are automatically refreshed and updated. 
+
+#### Outputs
+Outputs in the `ui` create placeholders that are later filled by the server function. Like inputs, outputs take a unique ID as their first argument. Each output function on the front end is coupled with a `render` function in the back end. For example, if your UI specification creates an output with ID `"plot"`, you’ll access it in the server function with `output$plot`. 
+
+There are different types of output we may want to show in the app. Here is a list of some of the most common outputs functions in `ui` along with their render function in the `server`:
+
+$$
+\begin{array}{lll}
+\hline \text { Content type } & \text { Output function (ui.R) } & \text { Renderfunction (server.R) } \\
+\hline \text { Plots } & \text { plotOutput } & \text { renderPlot } \\
+\text { Raw text / R output } & \text { verbatimTextOutput } & \text { renderPrint } \\
+\text { Data (basic table) } & \text { tableOutput } & \text { renderTable } \\
+\text { Data (fancy table) } & \text { dataTableOutput } & \text { renderDataTable } \\
+\text { Download } & \text { downloadButton } & \text { downloadHandler } \\
+\text { Shiny controls (adaptive) } & \text { uiOutput } & \text { renderUI } \\
+\hline
+\end{array}
+$$
+For example, lets create a plot output (called `"plot1"`) in the `ui` as follows:
+
+```{r}
+library(shiny)
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    plotOutput("plot1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+}
+
+shinyApp(ui, server)
+
+```
+
+If you run the code above you see nothing has changed. This is mainly because you have just specified what output R should expect and where it should be displayed. You haven't instructed R yet how to generate that output. This will be done inside the `server` function where you provide a code to create and update the plot using:
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(palmerpenguins)
+
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    plotOutput("plot1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  output$plot1 <- renderPlot({ 
+      ggplot(penguins, aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+}
+
+shinyApp(ui, server)
+
+```
+
+Well, the link between the `plotOutput` in `ui` and `output$plot1` and `renderPlot()` in the `server` function seem to be working fine. But does the plot show what we aimed to display? I mean the app to allow us to filter penguin data based on species, sex, and body mass range and then visualizes relationship between penguins' bill depths and bill lengths for the filtered data in a scatter plot. 
+
+Obviously we have a scatter plot of bill depths vs bill lengths. But it is based on all available data and changing the inputs in the shiny sidebar panel doesn't change the plot. This can be done by filtering the data based on the input provided by the user as follows:
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(palmerpenguins)
+
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    plotOutput("plot1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+  output$plot1 <- renderPlot({ 
+    penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year) %>%
+      ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+ 
+}
+
+shinyApp(ui, server)
+```
+
+Notice that the plot now updates whenever you change the input controls. This dependency is created implicitly because we’ve referred to `input$species`, `input$sex`, `input$bmass` and `input$year` within the output functions. These `inputs` are populated with the current value of the UI component with their corresponding ids, and will cause the outputs to automatically update whenever that value changes. This is the essence of **reactivity**, i.e. outputs automatically react (recalculate) when their inputs change.
+
+**Exercise:** As an exercise add an appropriate output function to your shiny above that produce and display the filtered penguins dataset based on the selected input controls. 
+
+```{r}
+### Insert your code here
+library(shiny)
+library(tidyverse)
+library(palmerpenguins)
+
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    plotOutput("plot1"),
+    tableOutput("table1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+  filtered_data <- reactive({
+    filtered_data <- penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year)
+  })
+  
+  
+  
+  output$plot1 <- renderPlot({ 
+      filtered_data() %>%
+      ggplot(aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+    output$table1 <- renderTable({ 
+    filtered_data()
+    })
+}
+
+shinyApp(ui, server)
+
+
+```
+
+As you can see from your code above there are some lines of the code that are duplicated. For example the following lines are presented in both output functions:
+
+```{r}
+# penguins %>%
+#       filter(species == input$species) %>%
+#       filter(sex == input$sex) %>%
+#       filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+#       filter(year == input$year) 
+```
+
+In all of the programming languages, it’s a poor practice to have duplicated code. Not only it makes the computational task very extensive and time consuming but also will make it very difficult to maintain the code or debug any error occurs. 
+
+The `reactive({...})` function inside the `server` allows you to wrap all those lines inside a block. You should assign a variable to it and use it like you're using a function. However, the important thing is it only runs the first time you use it, and then it remembers the result until it needs to change.
+
+We can update our `server` to use reactive expressions, as shown below. The app behaves exactly the same, but works a little more efficiently because it only needs to filter the dataset once, not twice.
+
+
+```{r}
+library(shiny)
+library(tidyverse)
+library(palmerpenguins)
+
+
+ui <- fluidPage(
+  titlePanel("Palmer Penguins Explorer"),
+  sidebarLayout(
+    sidebarPanel(
+        selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+        radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+        sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+        sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+
+    ),
+    mainPanel(
+    plotOutput("plot1"),
+    dataTableOutput("table1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+  penguins_sub <- reactive({
+    penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year)
+  })
+  
+  output$plot1 <- renderPlot({ 
+      ggplot(data = penguins_sub(), aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+  output$table1 <- renderDataTable({ 
+    penguins_sub()
+    })
+  
+}
+
+shinyApp(ui, server)
+```
+
+**Exercise** Improve your shiny above by i) allowing users to choose the color of the points in scatter plot between "purple", "darkgreen", "yellow"; and ii) generate a histogram of penguins' bill length for the filtered dataset. 
+
+```{r}
+### Insert your code here
+
+
+
+```
+
+Well, This is it! Congratulations! You've successfully built your first shiny app. I am sure you are excited to see how your existing R skills can be used to create such nice web applications. While you've taken your first steps, remember that there are lots of details to explore and learn as you improve your proficiency in R as well as developing shiny applications. The good thing is, you're not alone on this journey. There are plenty of valuable online resources available for further learning and guidance that I have listed some of these at the end of this lecture note. 
+
+## Translational Statistics
+Translational Statistics proposes to promote the use of Statistics within research and improve the communication of statistical findings in an accurate and accessible manner to diverse audiences. When statistical models become more complex, it becomes harder to evaluate the role of explanatory variables on the response. For example, the interpretation and communication of the effect of predictors in regression models where interactions or smoothing splines are included can be challenging. Informative graphical representations of statistical models play a critical translational role; static nomograms are one such useful tool to visualise statistical models. [Jalali et. al.](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225253) proposed the use of dynamic nomogram as a translational tool which can accommodate models of increased complexity. In theory, all models appearing in the literature could be accompanied by the corresponding dynamic nomogram to translate models in an informative manner. The **DynNom** R package will facilitate this communication (as a **shiny** object) for a variety of linear and non-linear models.
+
+For example, the code below will create a dynamic nomogram for predicting penguins bill length based on their bill depth, sex and species:
+
+```{r}
+library(DynNom)
+fit <- lm(bill_length_mm ~ species + sex, data = na.omit(penguins))
+DynNom(fit, data = penguins, covariate = "numeric")
+```
+
+As can be seen, the dynamic nomogram shows numerical variables with numeric input (as specified) and categorical variables with drop-down boxes (by default). The output plot displays the predicted values of the response variable (i.e. `bill_length_mm`) and its corresponding 95% confidence interval based on different sets of values for the covariates. The resulting plot is a plotly object which provides the users with all interactivity capabilities offered by plotly like zooming, tooltip and etc. The numerical and model summary panels also provide users with the corresponding predicted values and printed model summaries.
+
+A big advantage of DynNom is the `DNbuilder()` function which generates all the necessary code to deploy the dynamic nomogram on a hosting platform.
+
+```{r}
+DNbuilder(fit, data = penguins, covariate = "numeric")
+```
+
+The resulted files are downloaded in two your working directory as instructed from the function output in your R console.
+
+## hosting shiny apps
+The power of a shiny application is that, it can be easily deployed on the web for communicating purposes. Shiny offers both free and commercial options, as shiny applications can be hosted for free on [shinyapps.io](https://www.shinyapps.io/) or at a cost on a shiny Server allowing more privacy and less limitations. For a more detailed instruction on how to host your shiny please visit [here](https://shiny.posit.co/r/articles/share/shinyapps/)
+
+In practice, any statistical model or analysis can potentially be accompanied by a URL that directs readers to an interactive model visualisation environment (generated by shiny or similar tools) for better understanding of the analysis undertaken and the findings. 
+
+
+## Shinydashboard
+The shiny package is a powerful tool for generating interactive data visualisations. However, sometimes displaying many graphs on one page might be challenging and and not very informatics. The [**shinydashboard**](https://rstudio.github.io/shinydashboard/) package was developed with the aim to allow users intuitively structure their visualisations by breaking the main panel into different sections and tabs. In another word, **shinydashboard** is an appealing template for creating dashboards within shiny applications with more widgets and layout options. The main difference between shiny and shinydashboard is in user interface (i.e. `ui()` ) elements which the later
+offers a slightly more modern theme. The `ui()` in **shinydashboard** consists of three main parts including (1) Header; (2) Sidebar; and (3) Body as follow:
+
+```{r}
+library(shinydashboard)
+ui <- dashboardPage(
+    dashboardHeader(),
+    dashboardSidebar(),
+    dashboardBody()
+)
+
+server <- function(input, output) {
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+The `dashboardHeader()` generally contains the title of the application. However, some dropdown menues like notification or message bars can be also added to the dashboard in the `dashboardHeader()` . The `dashboardSidebar()` in the simplest case contains the ordinary shiny input widgets like `textInput()` or `selectInput()`. However, menu items, each with different sets of input widgets, can be defined in
+`dashboardSidebar()` as well. The `dashboardBody()` of a dashboard on the other hand is where the design of the layout of a dashboard is given. It usually consists of different boxes within which any shiny `ui()` content like `sliderInput()`, `plotOutput()` can be defined. However, like shiny, it is within the `server()` function that the outputs of interest will be created based on a set of inputs.
+
+The code below generates the dashboard created for penguins dataset using shinydashboard:
+
+```{r}
+library(shinydashboard)
+ui <- dashboardPage(
+    dashboardHeader(title = "Palmer Penguins Explorer"),
+    dashboardSidebar(
+      selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+      radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+      sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+      sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+    ),
+    dashboardBody(
+    plotOutput("plot1"),
+    dataTableOutput("table1")
+    )
+)
+
+server <- function(input, output) {
+  penguins_sub <- reactive({
+    penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year)
+  })
+  
+  output$plot1 <- renderPlot({ 
+      ggplot(data = penguins_sub(), aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+  output$table1 <- renderDataTable({ 
+    penguins_sub()
+    })
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+And alternative display of the shinydashboard above could be:
+
+```{r}
+library(shinydashboard)
+ui <- dashboardPage(
+    dashboardHeader(title = "Palmer Penguins Explorer",titleWidth = 450,
+                  tags$li(a(href = 'https://allisonhorst.github.io/palmerpenguins/',
+                            img(src = 'penguins.png',
+                                title = "Penguins Homepage", height = "30px", width = "50px"),
+                            style = "padding-top:10px; padding-bottom:10px;"),
+                          class = "dropdown")),
+    
+    dashboardSidebar(
+      selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+      radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+      sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+      sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+    ),
+    dashboardBody(
+      fluidRow(
+        box(width=4, title = "Scatter Plot", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            plotOutput("plot1")),
+        box(width=8, title = "Data", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            dataTableOutput("table1"))
+      )
+    )
+)
+
+server <- function(input, output) {
+  penguins_sub <- reactive({
+    penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year)
+  })
+  
+  output$plot1 <- renderPlot({ 
+      ggplot(data = penguins_sub(), aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+  output$table1 <- renderDataTable({ 
+    penguins_sub()
+    })
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+
+## customising your shiny more
+Shiny allows you to customise the appearance of your app to your desired form. This includes changing the layout of your `sidebarPanel` and `mainPanel` as well as the theme of your app. 
+
+Here is an example of modifying our shinydashboard above to have the plot and data in two different tabs:
+
+```{r}
+library(shinydashboard)
+ui <- dashboardPage(
+    dashboardHeader(title = "Palmer Penguins Explorer",titleWidth = 450,
+                  tags$li(a(href = 'https://allisonhorst.github.io/palmerpenguins/',
+                            img(src = 'penguins.png',
+                                title = "Penguins Homepage", height = "30px", width = "50px"),
+                            style = "padding-top:10px; padding-bottom:10px;"),
+                          class = "dropdown")),
+    
+    dashboardSidebar(
+      selectInput(inputId = "species", label = "Select Penguin Species:", choices = c("Adelie", "Gentoo", "Chinstrap"), multiple = FALSE),
+      radioButtons(inputId = "sex", label = "Select Penguin Sex:", choices = c("female", "male")),
+      sliderInput("bmass", "Select Body Mass Range:", min = 2500, max = 7000, value = c(4000, 5000)),
+      sliderInput("year", "Select year of the study:", min = 2007, max = 2009, value = 2007, step = 1, animate = TRUE)
+    ),
+    dashboardBody(
+    tabBox(width = 12, id = "tabs",
+      tabPanel("Scatter Plot", 
+               fluidRow(box(width=12, title = "Scatter Plot", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            plotOutput("plot1")))
+      ),
+      tabPanel("Data", 
+               fluidRow(
+                box(width=12, title = "Data", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            dataTableOutput("table1")) 
+               )
+               
+      )
+    )
+  )
+)
+
+server <- function(input, output) {
+  penguins_sub <- reactive({
+    penguins %>%
+      filter(species == input$species) %>%
+      filter(sex == input$sex) %>%
+      filter(body_mass_g >= input$bmass[1] & body_mass_g <= input$bmass[2]) %>%
+      filter(year == input$year)
+  })
+  
+  output$plot1 <- renderPlot({ 
+      ggplot(data = penguins_sub(), aes(x = bill_depth_mm, y = bill_length_mm)) +
+      geom_point()
+    })
+  
+  output$table1 <- renderDataTable({ 
+    penguins_sub()
+    })
+  
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+As you could see from the code above we just changes the `dashboardBody` to:
+
+```{r, eval=FALSE}
+dashboardBody(
+    tabBox(width = 12, id = "tabs",
+      tabPanel("Scatter Plot", 
+               fluidRow(box(width=12, title = "Scatter Plot", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            plotOutput("plot1")))
+      ),
+      tabPanel("Data", 
+               fluidRow(
+                box(width=12, title = "Data", collapsible = TRUE, status = "warning", solidHeader = TRUE,
+            dataTableOutput("table1")) 
+               )
+               
+      )
+    )
+  )
+```
+
+The detailed description of shiny customisation is beyond the objective of this course. However, you are highly encouraged to visit the [Chapter 6](https://mastering-shiny.org/action-layout.html) of [Mastering Shiny](https://mastering-shiny.org/index.html) by Hadley Wickham for learning this important topic. 
+
+## Extra Resources
+
+-   [Getting Started with shiny in R](https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html)
+
+-   [Mastering Shiny](https://mastering-shiny.org/index.html) by Hadley Wickham
+
+-   [Getting Started with shinydashboard in R](https://rstudio.github.io/shinydashboard/)
+
+-   [Shiny cheatsheet](https://raw.githubusercontent.com/rstudio/cheatsheets/main/shiny.pdf)
+
+-   [Shiny Examples](https://github.com/rstudio/shiny-examples)
+
+-   [Getting Started with flexdashboard](https://pkgs.rstudio.com/flexdashboard/)
+
+-   [Interactive Dashboards with Flexdashboard and Shiny](https://www.r-bloggers.com/2022/12/redesigning-dashboards-with-shiny-and-rhino-world-banks-carbon-pricing)
+
+
+-   Datacamp courses on:
+
+    -   [Building Web Applications with Shiny in R](https://app.datacamp.com/learn/courses/building-web-applications-with-shiny-in-r)
+    -   [Case Studies: Building Web Applications with Shiny in R](https://app.datacamp.com/learn/courses/case-studies-building-web-applications-with-shiny-in-r)
+    -   [Creating Dashboards with shinydashboard](https://app.datacamp.com/learn/courses/creating-dashboards-with-shinydashboard)
+    -   [https://app.datacamp.com/learn/courses/building-dashboards-with-flexdashboard](https://app.datacamp.com/learn/courses/building-dashboards-with-flexdashboard)
