@@ -69,6 +69,7 @@ DIG_sub.df <- DIG_sub.df %>%
     HOSP = fct_recode(HOSP, No = "0", Yes = "1"),
     DEATH = fct_recode(DEATH, Alive = "0", Death = "1")
   )
+
 ```
 
 Shiny
@@ -101,5 +102,69 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
-
 ```
+
+Not sure how you guys would like it for the format. For now I will put my work in the chunk below. (KY)
+
+```{r}
+library(tidyverse)
+library(shiny)
+library(ggplot2)
+
+# Purpose - Shinny App to show prognostic factors effect on death rate
+
+ui <- fluidPage(
+  titlePanel("Prognostic Effect on Death Rate by Group"),
+  
+  sidebarLayout(
+    sidebarPanel(
+        sliderInput(inputId = "AGE", label = "Select Age", min = 0, max = 100, value = c(0,100), step = 1,animate = TRUE),
+        selectInput(inputId = "SEX", label = "Select Sex", choices = c("Male","Female"), multiple = T, selected = c("Male", "Female")),
+        sliderInput(inputId = "BMI", label = "Select BMI", min = 10, max = 65, value = c(10,65)),
+        sliderInput(inputId = "KLEVEL", label = "Select Potassium Level", min = 0, max = 450, value = c(0,450)),
+        sliderInput(inputId = "CREAT", label = "Select Creatinine Level", min = 0, max = 4, value = c(0,4)),
+        selectInput(inputId = "HYPERTEN", label = "Select Hypertension History", choices = c("Yes","No"), multiple = T, selected = c("Yes", "No")),
+        selectInput(inputId = "CVD", label = "Select CVD History", choices = c("Yes","No"), multiple = T, selected = c("Yes", "No")),
+        selectInput(inputId = "WHF", label = "Select Worsen HF History", choices = c("Yes","No"), multiple = T, selected = c("Yes", "No")),
+        selectInput(inputId = "DIG", label = "Select Digoxin History", choices = c("Yes","No"), multiple = T, selected = c("Yes", "No"))
+    ),
+    
+    mainPanel(
+    plotOutput("plot1"),
+    dataTableOutput("table1")
+    )
+  )
+  
+)
+
+server <- function(input, output) {
+  
+  DIG_sub.df2 <- reactive({
+    DIG_sub.df %>%
+      filter(AGE >= input$AGE[1] & AGE <= input$AGE[2]) %>%
+      filter(SEX == input$SEX) %>%
+      filter(BMI >= input$BMI[1] & BMI <= input$BMI[2]) %>%
+      filter(KLEVEL >= input$KLEVEL[1] & KLEVEL <= input$KLEVEL[2]) %>%
+      filter(CREAT >= input$CREAT[1] & CREAT <= input$CREAT[2]) %>%
+      filter(HYPERTEN == input$HYPERTEN) %>%
+      filter(CVD == input$CVD) %>%
+      filter(WHF == input$WHF) %>%
+      filter(DIG == input$DIG)
+  })
+   
+  output$plot1 <- renderPlot({ 
+      DIG_sub.df2() %>%
+      group_by(TRTMT) %>%
+      summarise(Death_rate = sum((DEATH == "Death") / n())) %>%
+      ggplot(aes(x = TRTMT, y = Death_rate, fill = TRTMT)) + geom_bar (stat = "identity")
+    })
+  
+  output$table1 <- renderDataTable({ 
+    DIG_sub.df2()
+    })
+  
+}
+
+shinyApp(ui, server)
+```
+
