@@ -34,7 +34,7 @@ install.packages(c("shiny", "ggplot2", "dplyr", etc...))
 Prepare DIG file
 
 ```{r}
-DIG.df <- read.csv("/Users/mtooq8/Desktop/DIG.csv")
+DIG.df <- read.csv("data/DIG.csv")
 DIG_sub.df <- DIG.df %>%
   select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, SYSBP, 
          HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY)
