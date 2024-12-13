@@ -75,13 +75,17 @@ DIG_sub.df <- DIG_sub.df %>%
 Shiny
 
 ```{r}
-if (!require("shiny")) install.packages("shiny")
-if (!require("tidyverse")) install.packages("tidyverse")
-if (!require("DynNom")) install.packages("DynNom")
-if (!require("shinydashboard")) install.packages("shinydashboard")
+install.packages("table1")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("forcats")
+library(forcats)
+library(readr)
+library(dplyr)
+library(table1)
+library(ggplot2)
 library(tidyverse)
 library(shiny)
-
 
 
 ui <- fluidPage(
