@@ -164,11 +164,12 @@ server <- function(input, output) {
       group_by(TRMT) %>%
       summarise(Mortality_Rate = mean(as.numeric(DEATH == "Death"), na.rm = TRUE)) %>%
       ggplot(aes(x = TRMT, y = Mortality_Rate, fill = TRMT)) +
-      geom_bar(stat = "identity", position = "dodge", alpha = 0.8) +
-      theme_minimal() +
-      labs(title = "Mortality Rate by Treatment Group", 
-           x = "Treatment Group", 
-           y = "Mortality Rate", 
+      geom_bar(stat = "identity", position = "dodge", alpha = 5) +
+       scale_fill_manual(values = c("black", "skyblue")) +
+      theme_classic() +
+      labs(title = "Mortality Rate by Treatment Group",
+           x = "Treatment Group",
+           y = "Mortality Rate",
            fill = "Treatment Group") +
       scale_y_continuous(labels = scales::percent)
   })
