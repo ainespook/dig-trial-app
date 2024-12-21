@@ -15,4 +15,8 @@ To run this app, you will need the following R packages:
 - shiny
 - ggplot2
 - dplyr
-- etc...
+- forcats
+- readr
+- table1
+- tidyverse
+- shinydashboard
