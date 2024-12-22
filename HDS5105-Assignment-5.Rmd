@@ -67,49 +67,33 @@ DIG.df <- read.csv("data/DIG.csv") %>%
   )
 
 ui <- dashboardPage(
-  dashboardHeader(title = "DIG Data Explorer", titleWidth = 450),
-  
-  dashboardSidebar(
-    checkboxGroupInput(inputId = "sex", label = "Select Sex:", 
-                       choices = c("Male", "Female"), selected = c("Male", "Female")),
-    sliderInput("age_range", "Select Age Range:", 
-                min = min(DIG.df$AGE, na.rm = TRUE), 
-                max = max(DIG.df$AGE, na.rm = TRUE), 
-                value = c(50, 80)),
-    sliderInput("bmi_range", "Select BMI Range:", 
-                min = min(DIG.df$BMI, na.rm = TRUE), 
-                max = max(DIG.df$BMI, na.rm = TRUE), 
-                value = c(20, 30)),
-    checkboxGroupInput(inputId = "hypertension", label = "Hypertension:", 
-                       choices = c("Yes", "No"), selected = c("Yes", "No")),
-    checkboxGroupInput(inputId = "cvd", label = "Cardiovascular Disease:", 
-                       choices = c("Yes", "No"), selected = c("Yes", "No")),
-    checkboxGroupInput(inputId = "hospitalization", label = "Hospitalization:", 
-                       choices = c("Yes", "No"), selected = c("Yes", "No")),
-    checkboxGroupInput(inputId = "whf", label = "Worsening Heart Failure:", 
-                       choices = c("Yes", "No"), selected = c("Yes", "No"))
+  dashboardHeader(title = tags$div(
+      "Digitalis Investigation Group",
+      style = "font-size: 24px; color: White; text-align: center; width: 100%;"),
+    titleWidth = "100%"),
+  dashboardSidebar(checkboxGroupInput(inputId = "sex", label = "Select Sex:", choices = c("Male", "Female"), selected = c("Male", "Female")),
+    sliderInput("age_range", "Select Age Range:", min = min(DIG.df$AGE, na.rm = TRUE), max = max(DIG.df$AGE, na.rm = TRUE), value = c(50, 80)),
+    sliderInput("bmi_range", "Select BMI Range:", min = min(DIG.df$BMI, na.rm = TRUE), max = max(DIG.df$BMI, na.rm = TRUE), value = c(20, 30)),
+    checkboxGroupInput(inputId = "hypertension", label = "Hypertension:", choices = c("Yes", "No"), selected = c("Yes", "No")),
+    checkboxGroupInput(inputId = "cvd", label = "Cardiovascular Disease:", choices = c("Yes", "No"), selected = c("Yes", "No")),
+    checkboxGroupInput(inputId = "hospitalization", label = "Hospitalization:", choices = c("Yes", "No"), selected = c("Yes", "No")),
+    checkboxGroupInput(inputId = "whf", label = "Worsening Heart Failure:", choices = c("Yes", "No"), selected = c("Yes", "No"))
   ),
-  
-  dashboardBody(
-    tabBox(width = 12, id = "tabs",
-      tabPanel("Mortality Rate Plot", 
-               fluidRow(
-                 box(width = 12, title = "Mortality Rate by Treatment Group", collapsible = TRUE, 
-                     status = "warning", solidHeader = TRUE,
-                     plotOutput("plot1"))
+  dashboardBody(tabBox(width = 12,id = "tabs",
+      tabPanel("Mortality Rate Plot",
+        fluidRow(
+          box(width = 12,title = div("Mortality Rate by Treatment Group",style = "text-align: center; line-height: 30px; color: white;"),
+            collapsible = TRUE,status = "success",solidHeader = TRUE,plotOutput("plot1"))
                )),
-      tabPanel("Filtered Data", 
-               fluidRow(
-                 box(width = 12, title = "Filtered Data Table", collapsible = TRUE, 
-                     status = "warning", solidHeader = TRUE,
-                     dataTableOutput("table1"))
+      tabPanel("Filtered Data",
+        fluidRow(
+          box(width = 12,title = tags$div("Filtered Data Table",style = "text-align: center; line-height: 30px; color: white;"),
+            collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1"))
                ))
     )
-  )
-)
-
+  ),
+   skin = "green")
 server <- function(input, output) {
-  
   filtered_data <- reactive({
     DIG.df %>%
       filter(SEX %in% input$sex) %>%
@@ -120,7 +104,6 @@ server <- function(input, output) {
       filter(HOSP %in% input$hospitalization) %>%
       filter(WHF %in% input$whf)
   })
-  
   output$plot1 <- renderPlot({
     filtered_data() %>%
       group_by(TRTMT) %>%
@@ -131,19 +114,19 @@ server <- function(input, output) {
                 vjust = -0.3, size = 8) +
        scale_fill_manual(values = c("black", "skyblue")) +
       theme_classic() +
-      labs(title = "Mortality Rate by Treatment Group",
-           x = "Treatment Group",
-           y = "Mortality Rate",
-           fill = "Treatment Group") +
+      labs(x = "Treatment Group",y = "Mortality Rate",fill = "Treatment Group") +
+      theme(
+        plot.title = element_text(color = "black", size = 20, face = "bold")
+      ) +
       scale_y_continuous(labels = scales::percent, limits = c(0, 1))
   })
   
-  output$table1 <- renderDataTable({
-    filtered_data()
-  })
+output$table1 <- renderDataTable({
+    filtered_data() %>%
+      select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, SYSBP, 
+         HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY)
+})
 }
-
-
 shinyApp(ui = ui, server)
 ```
 
