@@ -1,7 +1,7 @@
 ---
 title: "HDS5105 Assignment 5"
 output: html_document
-date: "2024-12-19"
+date: "2024-12-22"
 ---
 
 #Project Description
@@ -33,44 +33,6 @@ install.packages(c("shiny", "ggplot2", "dplyr", etc...))
 
 Prepare DIG file
 
-```{r}
-DIG.df <- read.csv("data/DIG.csv")
-DIG_sub.df <- DIG.df %>%
-  select(ID, TRTMT, AGE, SEX, BMI, KLEVEL, CREAT, DIABP, SYSBP, 
-         HYPERTEN, CVD, WHF, DIG, HOSP, HOSPDAYS, DEATH, DEATHDAY)
-DIG_sub.df <- DIG_sub.df %>%
-  mutate(
-    ID = as.factor(ID),
-    TRTMT = as.factor(TRTMT),
-    AGE = as.numeric(AGE),
-    SEX = as.factor(SEX),
-    BMI = as.numeric(BMI),
-    KLEVEL = as.numeric(KLEVEL),
-    CREAT = as.numeric(CREAT),
-    DIABP = as.numeric(DIABP),
-    SYSBP = as.numeric(SYSBP),
-    HYPERTEN = as.factor(HYPERTEN),
-    CVD = as.factor(CVD),
-    WHF = as.factor(WHF),
-    DIG = as.factor(DIG),
-    HOSP = as.factor(HOSP),
-    HOSPDAYS = as.numeric(HOSPDAYS),
-    DEATH = as.factor(DEATH),
-    DEATHDAY = as.numeric(DEATHDAY)
-  )
-DIG_sub.df <- DIG_sub.df %>%
-  mutate(
-    TRTMT = fct_recode(TRTMT, Placebo = "0", Treatment = "1"),
-    SEX = fct_recode(SEX, Male = "1", Female = "2"),
-    HYPERTEN = fct_recode(HYPERTEN, No = "0", Yes = "1"),
-    CVD = fct_recode(CVD, No = "0", Yes = "1"),
-    WHF = fct_recode(WHF, No = "0", Yes = "1"),
-    DIG = fct_recode(DIG, No = "0", Yes = "1"),
-    HOSP = fct_recode(HOSP, No = "0", Yes = "1"),
-    DEATH = fct_recode(DEATH, Alive = "0", Death = "1")
-  )
-
-```
 
 Shiny
 
@@ -93,7 +55,7 @@ library(shinydashboard)
 ```{r}
 DIG.df <- read.csv("data/DIG.csv") %>%
   mutate(
-    TRMT = fct_recode(as.factor(TRTMT), Placebo = "0", Treatment = "1"),
+    TRTMT = fct_recode(as.factor(TRTMT), Placebo = "0", Treatment = "1"),
     SEX = fct_recode(as.factor(SEX), Male = "1", Female = "2"),
     HYPERTEN = fct_recode(as.factor(HYPERTEN), No = "0", Yes = "1"),
     CVD = fct_recode(as.factor(CVD), No = "0", Yes = "1"),
@@ -161,17 +123,19 @@ server <- function(input, output) {
   
   output$plot1 <- renderPlot({
     filtered_data() %>%
-      group_by(TRMT) %>%
+      group_by(TRTMT) %>%
       summarise(Mortality_Rate = mean(as.numeric(DEATH == "Death"), na.rm = TRUE)) %>%
-      ggplot(aes(x = TRMT, y = Mortality_Rate, fill = TRMT)) +
-      geom_bar(stat = "identity", position = "dodge", alpha = 5) +
+      ggplot(aes(x = TRTMT, y = Mortality_Rate, fill = TRTMT)) +
+      geom_bar(stat = "identity", position = "dodge", alpha = 1, width = 0.5) +
+      geom_text(aes(label = scales::percent(Mortality_Rate, accuracy = 0.1)), 
+                vjust = -0.3, size = 8) +
        scale_fill_manual(values = c("black", "skyblue")) +
       theme_classic() +
       labs(title = "Mortality Rate by Treatment Group",
            x = "Treatment Group",
            y = "Mortality Rate",
            fill = "Treatment Group") +
-      scale_y_continuous(labels = scales::percent)
+      scale_y_continuous(labels = scales::percent, limits = c(0, 1))
   })
   
   output$table1 <- renderDataTable({
