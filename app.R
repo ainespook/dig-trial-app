@@ -45,6 +45,8 @@ install.packages("ggplot2")
 install.packages("forcats")
 install.packages("shinydashboard")
 install.packages("plotly")
+install.packages('rsconnect')
+library(rsconnect)
 library(plotly)
 library(forcats)
 library(readr)
@@ -54,7 +56,6 @@ library(ggplot2)
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
-
 
 DIG.df <- read.csv("data/DIG.csv") %>%
   mutate(
