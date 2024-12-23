@@ -4,6 +4,7 @@ output: html_document
 date: "2024-12-23"
 ---
 
+
 Shiny app for DIG trial data exploration
 
 This repository contains a Shiny app designed for exploring and visualizing data from the Digitalis Investigation Group (DIG) Trial.
