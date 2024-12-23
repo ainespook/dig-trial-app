@@ -39,12 +39,13 @@ Prepare DIG file
 
 Shiny
 
-
 install.packages("table1")
 install.packages("dplyr")
 install.packages("ggplot2")
 install.packages("forcats")
 install.packages("shinydashboard")
+install.packages("plotly")
+library(plotly)
 library(forcats)
 library(readr)
 library(dplyr)
