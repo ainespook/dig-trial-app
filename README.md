@@ -20,3 +20,4 @@ To run this app, you will need the following R packages:
 - table1
 - tidyverse
 - shinydashboard
+- plotly
