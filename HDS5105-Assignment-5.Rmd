@@ -29,11 +29,6 @@ To run this app, you will need the following R packages:
 - shinydashboard
 - plotly
 
-Prepare DIG file
-
-
-Shiny
-
 ```{r}
 install.packages("table1")
 install.packages("dplyr")
@@ -52,6 +47,8 @@ library(shiny)
 library(shinydashboard)
 ```
 
+#Prepare DIG file
+
 ```{r}
 DIG.df <- read.csv("data/DIG.csv") %>%
   mutate(
@@ -65,7 +62,11 @@ DIG.df <- read.csv("data/DIG.csv") %>%
     AGE = as.numeric(AGE),
     BMI = as.numeric(BMI)
   )
+```
 
+#Shiny
+
+```{r}
 ui <- dashboardPage(
   dashboardHeader(title = tags$div("Digitalis Investigation Group",
       style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
