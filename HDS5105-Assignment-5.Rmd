@@ -36,6 +36,7 @@ install.packages("ggplot2")
 install.packages("forcats")
 install.packages("shinydashboard")
 install.packages("plotly")
+install.packages("Stat2Data")
 library(plotly)
 library(forcats)
 library(readr)
@@ -45,6 +46,7 @@ library(ggplot2)
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
+library(Stat2Data)
 ```
 
 #Prepare DIG file
@@ -68,9 +70,13 @@ DIG.df <- read.csv("data/DIG.csv") %>%
 
 ```{r}
 ui <- dashboardPage(
+  
+  #The Header
   dashboardHeader(title = tags$div("Digitalis Investigation Group",
       style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
     titleWidth = "100%"),
+  
+  #The Sidebar
   dashboardSidebar(
     checkboxGroupInput(inputId = "sex", label = "Select Sex:", choices = c("Male", "Female"), selected = c("Male", "Female")),
     sliderInput("age_range", "Select Age Range:", min = min(DIG.df$AGE, na.rm = TRUE), 
@@ -84,7 +90,10 @@ ui <- dashboardPage(
     checkboxGroupInput(inputId = "whf", label = "Worsening Heart Failure:", choices = c("Yes", "No"), selected = c("Yes", "No"))
   ),
   
+  #Dash Body
   dashboardBody(tabBox(width = 12,id = "tabs",
+                       
+      #DIG Info tab
       tabPanel("DIG Information",
         fluidRow(
           box(width = 12,title = tags$div("DIG Trial Information",style = "text-align: center; font-weight: bold; color: white;"),
@@ -109,6 +118,8 @@ ui <- dashboardPage(
           )
         )
       ),
+      
+      #Scatter Plot tab
       tabPanel(
         "Scatter Plot",
         fluidRow(
@@ -122,6 +133,7 @@ ui <- dashboardPage(
           )
         )
       ),
+      
       tabPanel(
         "Mortality Rate",
         fluidRow(
@@ -132,6 +144,8 @@ ui <- dashboardPage(
           )
         )
       ),
+      
+      #Data tab
       tabPanel(
         "Data",
         fluidRow(
@@ -141,13 +155,28 @@ ui <- dashboardPage(
             collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1")
           )
         )
+      ),
+      
+      #OR tab
+      tabPanel(
+        "Odds Ration",
+        fluidRow(
+          box(width = 12,title = tags$div("Odds Ration and Confidence Interval",
+              style = "text-align: center; line-height: 30px; color: white;"
+            ),
+            collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("OR_plot")
+          )
+        )
       )
     )
   ),
-  skin = "green"
+  
+  skin = "green" #Skin
 )
 
 server <- function(input, output) {
+  
+  #Prepare data
   filtered_data <- reactive({
     DIG.df %>%
       filter(SEX %in% input$sex) %>%
@@ -159,6 +188,7 @@ server <- function(input, output) {
       filter(WHF %in% input$whf)
   })
   
+  # Scatter plot
   output$scatter_plot <- renderPlotly({
     data <- filtered_data()
     p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = SEX)) +
@@ -172,6 +202,7 @@ server <- function(input, output) {
     ggplotly(p)
   })
   
+  # Mortality rate
   output$plot1 <- renderPlotly({
     data <- filtered_data() %>%
       group_by(TRTMT) %>%
@@ -195,6 +226,7 @@ server <- function(input, output) {
     ggplotly(p, tooltip = "text")
   })
   
+  #Data table
   output$table1 <- renderDataTable({
     filtered_data() %>%
       select(
@@ -203,7 +235,32 @@ server <- function(input, output) {
       )
   }, options = list(pageLength = 10,lengthMenu = c(5, 10, 25, 50),scrollX = TRUE,autoWidth = TRUE
   ))
+  
+  #OR plot
+  output$OR_plot <- renderPlotly({
+    df <- filtered_data()
+    #fit glm model
+    model = glm(DEATH ~ TRTMT, family = binomial, data = df)
+    #tablelize coefficients
+    or_data <- data.frame(
+      DEATH = "TRTMT VS PLACEBO",
+      Middle = exp(model$coefficients[2]),
+      Lower = exp(confint(model)[2,1]),     
+      Upper = exp(confint(model)[2,2])
+      )
+    #Plot
+    ggplot(or_data, aes(x = DEATH, y = Middle)) +
+      geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "blue", size = 1.2) +
+      geom_point(size = 4, color = "black") +
+      labs(
+        title = "Odds Ratio of Death, Treatment vs Placebo, With Confidence Interval",
+        x = NULL,
+        y = "Odds Ratio"
+        ) +
+      theme_minimal()
+  })
 }
 
 shinyApp(ui = ui, server = server)
 ```
+
