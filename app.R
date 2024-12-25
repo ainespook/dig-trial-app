@@ -9,6 +9,7 @@ library(ggplot2)
 library(tidyverse)
 library(shiny)
 library(shinydashboard)
+library(Stat2Data)
 
 DIG.df <- read.csv("data/DIG.csv") %>%
   mutate(
@@ -24,9 +25,13 @@ DIG.df <- read.csv("data/DIG.csv") %>%
   )
 
 ui <- dashboardPage(
+  
+  #The Header
   dashboardHeader(title = tags$div("Digitalis Investigation Group",
-      style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
-    titleWidth = "100%"),
+                                   style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
+                  titleWidth = "100%"),
+  
+  #The Sidebar
   dashboardSidebar(
     checkboxGroupInput(inputId = "sex", label = "Select Sex:", choices = c("Male", "Female"), selected = c("Male", "Female")),
     sliderInput("age_range", "Select Age Range:", min = min(DIG.df$AGE, na.rm = TRUE), 
@@ -40,70 +45,106 @@ ui <- dashboardPage(
     checkboxGroupInput(inputId = "whf", label = "Worsening Heart Failure:", choices = c("Yes", "No"), selected = c("Yes", "No"))
   ),
   
+  #Dash Body
   dashboardBody(tabBox(width = 12,id = "tabs",
-      tabPanel("DIG Information",
-        fluidRow(
-          box(width = 12,title = tags$div("DIG Trial Information",style = "text-align: center; font-weight: bold; color: white;"),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,
-            tags$div(
-              style = "padding: 15px;",
-              tags$p(
-                "The DIG (Digitalis Investigation Group) Trial was a randomized, double-blind, multicenter trial with more than 300 centers in the United States and Canada participating. 
+                       
+                       #DIG Info tab
+                       tabPanel("DIG Information",
+                                fluidRow(
+                                  box(width = 12,title = tags$div("DIG Trial Information",style = "text-align: center; font-weight: bold; color: white;"),
+                                      collapsible = TRUE,status = "success",solidHeader = TRUE,
+                                      tags$div(
+                                        style = "padding: 15px;",
+                                        tags$p(
+                                          "The DIG (Digitalis Investigation Group) Trial was a randomized, double-blind, multicenter trial with more than 300 centers in the United States and Canada participating. 
                 The purpose of the trial was to examine the safety and efficacy of Digoxin in treating patients with congestive heart failure in sinus rhythm."
-              ),
-              tags$p(
-                "Digitalis was introduced clinically more than 200 years ago and has since become a commonly prescribed medication for the treatment of heart failure; however, there was considerable uncertainty surrounding its safety and efficacy."
-              ),
-              tags$p(
-                "Small trials indicated that Digoxin alleviated some of the symptoms of heart failure, prolonged exercise tolerance, and generally improved the quality of patients’ lives. 
+                                        ),
+                                        tags$p(
+                                          "Digitalis was introduced clinically more than 200 years ago and has since become a commonly prescribed medication for the treatment of heart failure; however, there was considerable uncertainty surrounding its safety and efficacy."
+                                        ),
+                                        tags$p(
+                                          "Small trials indicated that Digoxin alleviated some of the symptoms of heart failure, prolonged exercise tolerance, and generally improved the quality of patients’ lives. 
                 Unfortunately, these trials were generally small and although they did focus on the effect of treatment on patients’ relief from heart failure symptoms and quality of life, they failed to address the effect of treatment on cardiovascular outcomes."
-              ),
-              tags$p(
-                "Questions about the safety of Digoxin were also a concern. Digoxin toxicity is uncommon in small trials with careful surveillance; however, the long-term effects of therapeutic levels of Digoxin were less clear."
-              )
-            )
-          )
-        )
-      ),
-      tabPanel(
-        "Scatter Plot",
-        fluidRow(
-          box(width = 12,title = tags$div("Scatter Plot",
-              style = "text-align: center; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,
-            selectInput("y_var", "Select Y-Axis Variable:", 
-                        choices = c("BMI", "SYSBP", "DIABP", "KLEVEL"), selected = "BMI"),
-            plotlyOutput("scatter_plot")
-          )
-        )
-      ),
-      tabPanel(
-        "Mortality Rate",
-        fluidRow(
-          box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
-              style = "text-align: center; line-height: 30px; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("plot1")
-          )
-        )
-      ),
-      tabPanel(
-        "Data",
-        fluidRow(
-          box(width = 12,title = tags$div("Data Table",
-              style = "text-align: center; line-height: 30px; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1")
-          )
-        )
-      )
-    )
+                                        ),
+                                        tags$p(
+                                          "Questions about the safety of Digoxin were also a concern. Digoxin toxicity is uncommon in small trials with careful surveillance; however, the long-term effects of therapeutic levels of Digoxin were less clear."
+                                        )
+                                      )
+                                  )
+                                )
+                       ),
+                       
+                       #Scatter Plot tab
+                       tabPanel(
+                         "Scatter Plot",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Scatter Plot",
+                                                           style = "text-align: center; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,
+                           selectInput("y_var", "Select Y-Axis Variable:", 
+                                       choices = c("BMI", "SYSBP", "DIABP", "KLEVEL"), selected = "BMI"),
+                           plotlyOutput("scatter_plot")
+                           )
+                         )
+                       ),
+                       
+                       tabPanel(
+                         "Mortality Rate",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("plot1")
+                           )
+                         )
+                       ),
+                       
+                       #Data tab
+                       tabPanel(
+                         "Data",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Data Table",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1")
+                           )
+                         )
+                       ),
+                       
+                       #OR tab
+                       tabPanel(
+                         "Odds Ration",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Odds Ration and Confidence Interval",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("OR_plot")
+                           )
+                         )
+                       ),
+                       
+                       #Death curve tab
+                       tabPanel(
+                         "Death curve",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Cumulative Death Portion by Day",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("death_plot")
+                           )
+                         )
+                       ),
+                       
+  )
   ),
-  skin = "green"
+  
+  skin = "green" #Skin
 )
 
 server <- function(input, output) {
+  
+  #Prepare data
   filtered_data <- reactive({
     DIG.df %>%
       filter(SEX %in% input$sex) %>%
@@ -115,6 +156,7 @@ server <- function(input, output) {
       filter(WHF %in% input$whf)
   })
   
+  # Scatter plot
   output$scatter_plot <- renderPlotly({
     data <- filtered_data()
     p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = SEX)) +
@@ -122,12 +164,13 @@ server <- function(input, output) {
       scale_color_manual(values = c("Male" = "black", "Female" = "pink")) +
       theme_minimal() +
       labs(x = "Age",y = input$y_var,color = "Sex",
-        title = paste("Scatter Plot of", input$y_var, "vs Age")
+           title = paste("Scatter Plot of", input$y_var, "vs Age")
       )
     
     ggplotly(p)
   })
   
+  # Mortality rate
   output$plot1 <- renderPlotly({
     data <- filtered_data() %>%
       group_by(TRTMT) %>%
@@ -151,6 +194,7 @@ server <- function(input, output) {
     ggplotly(p, tooltip = "text")
   })
   
+  #Data table
   output$table1 <- renderDataTable({
     filtered_data() %>%
       select(
@@ -159,6 +203,40 @@ server <- function(input, output) {
       )
   }, options = list(pageLength = 10,lengthMenu = c(5, 10, 25, 50),scrollX = TRUE,autoWidth = TRUE
   ))
+  
+  #OR plot
+  output$OR_plot <- renderPlotly({
+    df <- filtered_data()
+    #fit glm model
+    model = glm(DEATH ~ TRTMT, family = binomial, data = df)
+    #tablelize coefficients
+    or_data <- data.frame(
+      DEATH = "TRTMT VS PLACEBO",
+      Middle = exp(model$coefficients[2]),
+      Lower = exp(confint(model)[2,1]),     
+      Upper = exp(confint(model)[2,2])
+    )
+    #ggplot
+    ggplot(or_data, aes(x = DEATH, y = Middle)) +
+      geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "blue", size = 1.2) +
+      geom_point(size = 4, color = "black") +
+      labs(
+        title = "Odds Ratio of Death, Treatment vs Placebo, With Confidence Interval",
+        x = NULL,
+        y = "Odds Ratio"
+      ) +
+      theme_minimal()
+  })
+  
+  #Death curve
+  output$death_plot <- renderPlotly({
+    filtered_data() %>%
+      ggplot(aes(x = DEATHDAY, color = TRTMT)) +
+      stat_ecdf(geom = "step", alpha=0.8, size=1) + 
+      scale_color_manual(values = c("red", "darkgreen")) +
+      theme_minimal() +
+      labs(x = "Death Day",y = "Cumulative Death Rate (%)",fill = "Treatment Group")
+  })
 }
 
 shinyApp(ui = ui, server = server)
