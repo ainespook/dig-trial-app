@@ -28,6 +28,7 @@ To run this app, you will need the following R packages:
 - tidyverse
 - shinydashboard
 - plotly
+- Stat2Data
 
 ```{r}
 install.packages("table1")
@@ -167,7 +168,20 @@ ui <- dashboardPage(
             collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("OR_plot")
           )
         )
-      )
+      ),
+      
+      #Death curve tab
+      tabPanel(
+        "Death curve",
+        fluidRow(
+          box(width = 12,title = tags$div("Cumulative Death Portion by Day",
+              style = "text-align: center; line-height: 30px; color: white;"
+            ),
+            collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("death_plot")
+          )
+        )
+      ),
+      
     )
   ),
   
@@ -248,7 +262,7 @@ server <- function(input, output) {
       Lower = exp(confint(model)[2,1]),     
       Upper = exp(confint(model)[2,2])
       )
-    #Plot
+    #ggplot
     ggplot(or_data, aes(x = DEATH, y = Middle)) +
       geom_errorbar(aes(ymin = Lower, ymax = Upper), width = 0.2, color = "blue", size = 1.2) +
       geom_point(size = 4, color = "black") +
@@ -258,6 +272,16 @@ server <- function(input, output) {
         y = "Odds Ratio"
         ) +
       theme_minimal()
+  })
+  
+  #Death curve
+  output$death_plot <- renderPlotly({
+    filtered_data() %>%
+  ggplot(aes(x = DEATHDAY, color = TRTMT)) +
+  stat_ecdf(geom = "step", alpha=0.8, size=1) + 
+  scale_color_manual(values = c("red", "darkgreen")) +
+  theme_minimal() +
+  labs(x = "Death Day",y = "Cumulative Death Rate (%)",fill = "Treatment Group")
   })
 }
 
