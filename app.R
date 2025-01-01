@@ -81,15 +81,16 @@ ui <- dashboardPage(
                            )
                          )
                        ),
-                       tabPanel(
-                         "Mortality Rate",
-                         fluidRow(
-                           box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
-                                                           style = "text-align: center; line-height: 30px; color: white;"
-                           ),
-                           collapsible = TRUE,status = "success",solidHeader = TRUE,plotOutput("plot1")
-                           )
-                         )
+                       tabPanel("Mortality Rate",
+                                fluidRow(
+                                  box(
+                                    width = 12,
+                                    title = tags$div(
+                                      "Mortality Rate by Treatment Group",style = "text-align: center; line-height: 30px; color: white;"
+                                    ),
+                                    collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("plot1")
+                                  )
+                                )
                        ),
                        tabPanel(
                          "Data",
@@ -129,7 +130,7 @@ server <- function(input, output) {
     ggplotly(p)
   })
   
-  output$plot1 <- renderPlot({
+  output$plot1 <- renderPlotly({
     data <- filtered_data()
     total_participants <- data %>%
       group_by(TRTMT) %>%
@@ -139,22 +140,17 @@ server <- function(input, output) {
       filter(DEATH == "Death") %>%
       mutate(time_interval = floor(DEATHDAY / 30)) %>%
       group_by(TRTMT, time_interval) %>%
-      summarize(
-        deaths_in_month = n()
-      ) %>%
+      summarize(deaths_in_month = n()) %>%
       left_join(total_participants, by = "TRTMT") %>%
-      mutate(
-        mortality_rate = (deaths_in_month / total_in_group) * 100
-      ) %>%
+      mutate(mortality_rate = (deaths_in_month / total_in_group) * 100) %>%
       ungroup()
-    
-    ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
-      geom_line(size = 1) +
-      geom_point(size = 2) +
-      labs(
-        x = "Months",y = "Mortality Rate (%)",color = "Treatment Group") +
+    p <- ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
+      geom_line(size = 0.5) +
+      geom_point(size = 1) +
+      labs(x = "Months",y = "Mortality Rate (%)",color = "Treatment Group") +
       theme_classic(base_size = 15) +
       scale_color_manual(values = c("Placebo" = "red", "Treatment" = "black"))
+    ggplotly(p)
   })
   
   
