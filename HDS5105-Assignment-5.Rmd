@@ -73,6 +73,7 @@ ui <- dashboardPage(
     titleWidth = "100%"),
   dashboardSidebar(
     checkboxGroupInput(inputId = "sex", label = "Select Sex:", choices = c("Male", "Female"), selected = c("Male", "Female")),
+    checkboxGroupInput(inputId = "TRTMT", label = "Select Group:", choices = c("Placebo", "Treatment"), selected = c("Placebo", "Treatment")),
     sliderInput("age_range", "Select Age Range:", min = min(DIG.df$AGE, na.rm = TRUE), 
                 max = max(DIG.df$AGE, na.rm = TRUE), 
                 value = c(min(DIG.df$AGE, na.rm = TRUE), max(DIG.df$AGE, na.rm = TRUE))),
@@ -122,13 +123,14 @@ ui <- dashboardPage(
           )
         )
       ),
-      tabPanel(
-        "Mortality Rate",
-        fluidRow(
-          box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
-              style = "text-align: center; line-height: 30px; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,plotOutput("plot1")
+      tabPanel("Mortality Rate",
+  fluidRow(
+    box(
+      width = 12,
+      title = tags$div(
+        "Mortality Rate by Treatment Group",style = "text-align: center; line-height: 30px; color: white;"
+      ),
+      collapsible = TRUE,status = "success",solidHeader = TRUE,plotlyOutput("plot1")
           )
         )
       ),
@@ -156,23 +158,21 @@ server <- function(input, output) {
       filter(HYPERTEN %in% input$hypertension) %>%
       filter(CVD %in% input$cvd) %>%
       filter(HOSP %in% input$hospitalization) %>%
-      filter(WHF %in% input$whf)
+      filter(WHF %in% input$whf) %>%
+      filter(TRTMT %in% input$TRTMT)
   })
   
   output$scatter_plot <- renderPlotly({
     data <- filtered_data()
-    p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = SEX)) +
+    p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = TRTMT)) +
       geom_point(alpha = 0.7, size = 1.5) +
-      scale_color_manual(values = c("Male" = "black", "Female" = "pink")) +
-      theme_minimal() +
-      labs(x = "Age",y = input$y_var,color = "Sex",
-        title = paste("Scatter Plot of", input$y_var, "vs Age")
-      )
-    
+      scale_color_manual(values = c("Placebo" = "turquoise", "Treatment" = "salmon")) +
+      theme_classic() +
+      labs(x = "Age", y = input$y_var, color = "Group", title = paste("Scatter Plot of", input$y_var, "vs Age"))
     ggplotly(p)
   })
   
-output$plot1 <- renderPlot({
+output$plot1 <- renderPlotly({
   data <- filtered_data()
   total_participants <- data %>%
     group_by(TRTMT) %>%
@@ -182,22 +182,17 @@ output$plot1 <- renderPlot({
     filter(DEATH == "Death") %>%
     mutate(time_interval = floor(DEATHDAY / 30)) %>%
     group_by(TRTMT, time_interval) %>%
-    summarize(
-      deaths_in_month = n()
-    ) %>%
+    summarize(deaths_in_month = n()) %>%
     left_join(total_participants, by = "TRTMT") %>%
-    mutate(
-      mortality_rate = (deaths_in_month / total_in_group) * 100
-    ) %>%
+    mutate(mortality_rate = (deaths_in_month / total_in_group) * 100) %>%
     ungroup()
-
-  ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(
-      x = "Time (Months)",y = "Monthly Mortality Rate (%)",color = "Treatment Group") +
-    theme_minimal(base_size = 15) +
+  p <- ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
+    geom_line(size = 0.5) +
+    geom_point(size = 1) +
+    labs(x = "Months",y = "Mortality Rate (%)",color = "Treatment Group") +
+    theme_classic(base_size = 15) +
     scale_color_manual(values = c("Placebo" = "red", "Treatment" = "black"))
+  ggplotly(p)
 })
 
   
@@ -212,5 +207,5 @@ output$plot1 <- renderPlot({
 }
 
 shinyApp(ui = ui, server = server)
-
 ```
+
