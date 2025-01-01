@@ -27,10 +27,11 @@ DIG.df <- read.csv("data/DIG.csv") %>%
 
 ui <- dashboardPage(
   dashboardHeader(title = tags$div("Digitalis Investigation Group",
-      style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
-    titleWidth = "100%"),
+                                   style = "font-size: 24px; color: white; text-align: center; width: 100%;"),
+                  titleWidth = "100%"),
   dashboardSidebar(
     checkboxGroupInput(inputId = "sex", label = "Select Sex:", choices = c("Male", "Female"), selected = c("Male", "Female")),
+    checkboxGroupInput(inputId = "TRTMT", label = "Select Group:", choices = c("Placebo", "Treatment"), selected = c("Placebo", "Treatment")),
     sliderInput("age_range", "Select Age Range:", min = min(DIG.df$AGE, na.rm = TRUE), 
                 max = max(DIG.df$AGE, na.rm = TRUE), 
                 value = c(min(DIG.df$AGE, na.rm = TRUE), max(DIG.df$AGE, na.rm = TRUE))),
@@ -43,64 +44,64 @@ ui <- dashboardPage(
   ),
   
   dashboardBody(tabBox(width = 12,id = "tabs",
-      tabPanel("DIG Information",
-        fluidRow(
-          box(width = 12,title = tags$div("DIG Trial Information",style = "text-align: center; font-weight: bold; color: white;"),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,
-            tags$div(
-              style = "padding: 15px;",
-              tags$p(
-                "The DIG (Digitalis Investigation Group) Trial was a randomized, double-blind, multicenter trial with more than 300 centers in the United States and Canada participating. 
+                       tabPanel("DIG Information",
+                                fluidRow(
+                                  box(width = 12,title = tags$div("DIG Trial Information",style = "text-align: center; font-weight: bold; color: white;"),
+                                      collapsible = TRUE,status = "success",solidHeader = TRUE,
+                                      tags$div(
+                                        style = "padding: 15px;",
+                                        tags$p(
+                                          "The DIG (Digitalis Investigation Group) Trial was a randomized, double-blind, multicenter trial with more than 300 centers in the United States and Canada participating. 
                 The purpose of the trial was to examine the safety and efficacy of Digoxin in treating patients with congestive heart failure in sinus rhythm."
-              ),
-              tags$p(
-                "Digitalis was introduced clinically more than 200 years ago and has since become a commonly prescribed medication for the treatment of heart failure; however, there was considerable uncertainty surrounding its safety and efficacy."
-              ),
-              tags$p(
-                "Small trials indicated that Digoxin alleviated some of the symptoms of heart failure, prolonged exercise tolerance, and generally improved the quality of patients’ lives. 
+                                        ),
+                                        tags$p(
+                                          "Digitalis was introduced clinically more than 200 years ago and has since become a commonly prescribed medication for the treatment of heart failure; however, there was considerable uncertainty surrounding its safety and efficacy."
+                                        ),
+                                        tags$p(
+                                          "Small trials indicated that Digoxin alleviated some of the symptoms of heart failure, prolonged exercise tolerance, and generally improved the quality of patients’ lives. 
                 Unfortunately, these trials were generally small and although they did focus on the effect of treatment on patients’ relief from heart failure symptoms and quality of life, they failed to address the effect of treatment on cardiovascular outcomes."
-              ),
-              tags$p(
-                "Questions about the safety of Digoxin were also a concern. Digoxin toxicity is uncommon in small trials with careful surveillance; however, the long-term effects of therapeutic levels of Digoxin were less clear."
-              )
-            )
-          )
-        )
-      ),
-      tabPanel(
-        "Scatter Plot",
-        fluidRow(
-          box(width = 12,title = tags$div("Scatter Plot",
-              style = "text-align: center; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,
-            selectInput("y_var", "Select Y-Axis Variable:", 
-                        choices = c("BMI", "SYSBP", "DIABP", "KLEVEL"), selected = "BMI"),
-            plotlyOutput("scatter_plot")
-          )
-        )
-      ),
-      tabPanel(
-        "Mortality Rate",
-        fluidRow(
-          box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
-              style = "text-align: center; line-height: 30px; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,plotOutput("plot1")
-          )
-        )
-      ),
-      tabPanel(
-        "Data",
-        fluidRow(
-          box(width = 12,title = tags$div("Data Table",
-              style = "text-align: center; line-height: 30px; color: white;"
-            ),
-            collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1")
-          )
-        )
-      )
-    )
+                                        ),
+                                        tags$p(
+                                          "Questions about the safety of Digoxin were also a concern. Digoxin toxicity is uncommon in small trials with careful surveillance; however, the long-term effects of therapeutic levels of Digoxin were less clear."
+                                        )
+                                      )
+                                  )
+                                )
+                       ),
+                       tabPanel(
+                         "Scatter Plot",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Scatter Plot",
+                                                           style = "text-align: center; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,
+                           selectInput("y_var", "Select Y-Axis Variable:", 
+                                       choices = c("BMI", "SYSBP", "DIABP", "KLEVEL"), selected = "BMI"),
+                           plotlyOutput("scatter_plot")
+                           )
+                         )
+                       ),
+                       tabPanel(
+                         "Mortality Rate",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Mortality Rate by Treatment Group",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,plotOutput("plot1")
+                           )
+                         )
+                       ),
+                       tabPanel(
+                         "Data",
+                         fluidRow(
+                           box(width = 12,title = tags$div("Data Table",
+                                                           style = "text-align: center; line-height: 30px; color: white;"
+                           ),
+                           collapsible = TRUE,status = "success",solidHeader = TRUE,dataTableOutput("table1")
+                           )
+                         )
+                       )
+  )
   ),
   skin = "green"
 )
@@ -114,50 +115,48 @@ server <- function(input, output) {
       filter(HYPERTEN %in% input$hypertension) %>%
       filter(CVD %in% input$cvd) %>%
       filter(HOSP %in% input$hospitalization) %>%
-      filter(WHF %in% input$whf)
+      filter(WHF %in% input$whf) %>%
+      filter(TRTMT %in% input$TRTMT)
   })
   
   output$scatter_plot <- renderPlotly({
     data <- filtered_data()
-    p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = SEX)) +
+    p <- ggplot(data, aes(x = AGE, y = .data[[input$y_var]], color = TRTMT)) +
       geom_point(alpha = 0.7, size = 1.5) +
-      scale_color_manual(values = c("Male" = "black", "Female" = "pink")) +
-      theme_minimal() +
-      labs(x = "Age",y = input$y_var,color = "Sex",
-        title = paste("Scatter Plot of", input$y_var, "vs Age")
-      )
-    
+      scale_color_manual(values = c("Placebo" = "turquoise", "Treatment" = "salmon")) +
+      theme_classic() +
+      labs(x = "Age", y = input$y_var, color = "Group", title = paste("Scatter Plot of", input$y_var, "vs Age"))
     ggplotly(p)
   })
   
-output$plot1 <- renderPlot({
-  data <- filtered_data()
-  total_participants <- data %>%
-    group_by(TRTMT) %>%
-    summarize(total_in_group = n_distinct(ID)) %>%
-    ungroup()
-  mortality_data <- data %>%
-    filter(DEATH == "Death") %>%
-    mutate(time_interval = floor(DEATHDAY / 30)) %>%
-    group_by(TRTMT, time_interval) %>%
-    summarize(
-      deaths_in_month = n()
-    ) %>%
-    left_join(total_participants, by = "TRTMT") %>%
-    mutate(
-      mortality_rate = (deaths_in_month / total_in_group) * 100
-    ) %>%
-    ungroup()
-
-  ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
-    geom_line(size = 1) +
-    geom_point(size = 2) +
-    labs(
-      x = "Time (Months)",y = "Monthly Mortality Rate (%)",color = "Treatment Group") +
-    theme_minimal(base_size = 15) +
-    scale_color_manual(values = c("Placebo" = "red", "Treatment" = "black"))
-})
-
+  output$plot1 <- renderPlot({
+    data <- filtered_data()
+    total_participants <- data %>%
+      group_by(TRTMT) %>%
+      summarize(total_in_group = n_distinct(ID)) %>%
+      ungroup()
+    mortality_data <- data %>%
+      filter(DEATH == "Death") %>%
+      mutate(time_interval = floor(DEATHDAY / 30)) %>%
+      group_by(TRTMT, time_interval) %>%
+      summarize(
+        deaths_in_month = n()
+      ) %>%
+      left_join(total_participants, by = "TRTMT") %>%
+      mutate(
+        mortality_rate = (deaths_in_month / total_in_group) * 100
+      ) %>%
+      ungroup()
+    
+    ggplot(mortality_data, aes(x = time_interval, y = mortality_rate, color = TRTMT, group = TRTMT)) +
+      geom_line(size = 1) +
+      geom_point(size = 2) +
+      labs(
+        x = "Months",y = "Mortality Rate (%)",color = "Treatment Group") +
+      theme_classic(base_size = 15) +
+      scale_color_manual(values = c("Placebo" = "red", "Treatment" = "black"))
+  })
+  
   
   output$table1 <- renderDataTable({
     filtered_data() %>%
